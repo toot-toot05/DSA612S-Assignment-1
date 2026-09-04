@@ -23,10 +23,21 @@ Implementation by Prince-Lee.
 
 ## Question 2: Remote Invocation - Rental Accommodation System
 
-Reserved for the remaining team members.
+Implemented as sibling Ballerina packages in `question-2-rental-accommodation/server` and
+`question-2-rental-accommodation/client`.
 
 ### Technology
 - Ballerina
 - gRPC
 - Protocol Buffers
 - Ballerina maps/tables
+
+### Operations
+- `AddProperty`: registers a property and returns a generated property ID.
+- `CreateUsers`: client-streaming registration for multiple hosts and guests.
+- `UpdateProperty`: updates a listing by property ID.
+- `ListProperties`: server-streaming listing with optional location and property-type filters.
+
+### Running Question 2
+1. Start the server with `bal run` from `question-2-rental-accommodation/server`.
+2. Run `bal run` from `question-2-rental-accommodation/client`.

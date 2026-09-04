@@ -7,6 +7,8 @@ service RentalAccommodationService {
   rpc CreateUsers (stream UserProfile) returns (CreateUsersResponse);
   rpc UpdateProperty (UpdatePropertyRequest) returns (UpdatePropertyResponse);
   rpc ListProperties (ListPropertiesRequest) returns (stream Property);
+  rpc RemoveProperty(RemovePropertyRequest) returns (RemovePropertyResponse);
+  rpc SearchProperty(SearchPropertyRequest) returns (SearchPropertyResponse);
 }
 
 message AddPropertyRequest {
@@ -61,4 +63,26 @@ message Property {
   string property_type = 4;
   double price_per_night = 5;
   string status = 6;
+}
+
+message SearchPropertyRequest {
+  property_id =1;
+}
+
+message SearchPropertyResponse {
+  Property property =1;
+  bool found =2;
+  string status_mesg =3;
+
+}
+
+message RemovePropertyRequest {
+  string property_id = 1;
+  string host_id = 2;
+}
+
+message RemovePropertyResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Property remaining_properties = 3;
 }

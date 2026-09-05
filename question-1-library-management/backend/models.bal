@@ -14,6 +14,8 @@ type Schedule record {|
     string scheduleId;
     ScheduleType scheduleType;
     string dueDate;
+    string startDate = "";
+    string endDate = "";
     string description;
 |};
 

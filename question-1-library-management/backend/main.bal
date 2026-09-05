@@ -363,6 +363,254 @@ resource function get assets/maintenance/overdue()
         return asset;
     }
 
+    // ============================================================
+// LOAN MANAGEMENT
+// ============================================================
+
+// LOAN an asset
+resource function post assets/[string assetTag]/loan()
+        returns Asset|http:NotFound|http:Conflict {
+
+    if !assets.hasKey(assetTag) {
+        return <http:NotFound>{
+            body: {
+                message: "Asset not found",
+                assetTag: assetTag
+            }
+        };
+    }
+
+    Asset asset = assets.get(assetTag);
+
+    // An asset can only be loaned when it is available.
+    if asset.status != "AVAILABLE" {
+        return <http:Conflict>{
+            body: {
+                message: "Asset cannot be loaned because it is not available",
+                assetTag: assetTag,
+                status: asset.status
+            }
+        };
+    }
+
+    asset.status = "LOANED_OUT";
+    assets.put(asset);
+
+    return asset;
+}
+
+
+// RETURN a loaned asset
+resource function post assets/[string assetTag]/'return()
+        returns Asset|http:NotFound|http:Conflict {
+
+    if !assets.hasKey(assetTag) {
+        return <http:NotFound>{
+            body: {
+                message: "Asset not found",
+                assetTag: assetTag
+            }
+        };
+    }
+
+    Asset asset = assets.get(assetTag);
+
+    // Only a loaned asset can be returned.
+    if asset.status != "LOANED_OUT" {
+        return <http:Conflict>{
+            body: {
+                message: "Asset cannot be returned because it is not currently loaned out",
+                assetTag: assetTag,
+                status: asset.status
+            }
+        };
+    }
+
+    asset.status = "AVAILABLE";
+    assets.put(asset);
+
+    return asset;
+}
+
+    // ============================================================
+// BOOKING MANAGEMENT
+// ============================================================
+
+// CREATE a booking for an asset
+resource function post assets/[string assetTag]/bookings(
+        Schedule booking)
+        returns Asset|http:NotFound|http:Conflict|http:BadRequest {
+
+    if !assets.hasKey(assetTag) {
+        return <http:NotFound>{
+            body: {
+                message: "Asset not found",
+                assetTag: assetTag
+            }
+        };
+    }
+
+    // A booking must be explicitly marked as BOOKING.
+    if booking.scheduleType != "BOOKING" {
+        return <http:BadRequest>{
+            body: {
+                message: "Booking schedule must have scheduleType BOOKING",
+                scheduleId: booking.scheduleId
+            }
+        };
+    }
+
+    // Booking dates are required.
+    if booking.startDate == "" || booking.endDate == "" {
+        return <http:BadRequest>{
+            body: {
+                message: "Booking requires startDate and endDate",
+                scheduleId: booking.scheduleId
+            }
+        };
+    }
+
+    // Validate that the start date is not after the end date.
+    if booking.startDate > booking.endDate {
+        return <http:BadRequest>{
+            body: {
+                message: "Booking startDate cannot be after endDate",
+                scheduleId: booking.scheduleId
+            }
+        };
+    }
+
+    Asset asset = assets.get(assetTag);
+
+    // Assets that are unavailable cannot be booked.
+    if asset.status == "LOANED_OUT" ||
+            asset.status == "OCCUPIED" ||
+            asset.status == "UNDER_MAINTENANCE" ||
+            asset.status == "DISPOSED" {
+
+        return <http:Conflict>{
+            body: {
+                message: "Asset cannot be booked in its current status",
+                assetTag: assetTag,
+                status: asset.status
+            }
+        };
+    }
+
+    // Check for duplicate schedule IDs.
+    foreach Schedule existingSchedule in asset.schedules {
+
+        if existingSchedule.scheduleId == booking.scheduleId {
+            return <http:Conflict>{
+                body: {
+                    message: "Schedule with this scheduleId already exists",
+                    scheduleId: booking.scheduleId,
+                    assetTag: assetTag
+                }
+            };
+        }
+    }
+
+    // Check for overlapping bookings.
+    foreach Schedule existingSchedule in asset.schedules {
+
+        if existingSchedule.scheduleType == "BOOKING" {
+
+            boolean overlaps =
+                booking.startDate <= existingSchedule.endDate &&
+                booking.endDate >= existingSchedule.startDate;
+
+            if overlaps {
+                return <http:Conflict>{
+                    body: {
+                        message: "Booking conflicts with an existing booking",
+                        scheduleId: booking.scheduleId,
+                        conflictingScheduleId: existingSchedule.scheduleId,
+                        assetTag: assetTag
+                    }
+                };
+            }
+        }
+    }
+
+    asset.schedules.push(booking);
+    assets.put(asset);
+
+    return asset;
+}
+
+
+// GET all bookings for an asset
+resource function get assets/[string assetTag]/bookings()
+        returns Schedule[]|http:NotFound {
+
+    if !assets.hasKey(assetTag) {
+        return <http:NotFound>{
+            body: {
+                message: "Asset not found",
+                assetTag: assetTag
+            }
+        };
+    }
+
+    Asset asset = assets.get(assetTag);
+    Schedule[] bookings = [];
+
+    foreach Schedule schedule in asset.schedules {
+
+        if schedule.scheduleType == "BOOKING" {
+            bookings.push(schedule);
+        }
+    }
+
+    return bookings;
+}
+
+
+// CANCEL a booking
+resource function delete assets/[string assetTag]/bookings/[string scheduleId]()
+        returns Asset|http:NotFound|http:Conflict {
+
+    if !assets.hasKey(assetTag) {
+        return <http:NotFound>{
+            body: {
+                message: "Asset not found",
+                assetTag: assetTag
+            }
+        };
+    }
+
+    Asset asset = assets.get(assetTag);
+
+    int bookingIndex = -1;
+
+    foreach int index in 0 ..< asset.schedules.length() {
+
+        Schedule schedule = asset.schedules[index];
+
+        if schedule.scheduleId == scheduleId &&
+                schedule.scheduleType == "BOOKING" {
+
+            bookingIndex = index;
+            break;
+        }
+    }
+
+    if bookingIndex == -1 {
+        return <http:NotFound>{
+            body: {
+                message: "Booking not found",
+                scheduleId: scheduleId,
+                assetTag: assetTag
+            }
+        };
+    }
+
+    _ = asset.schedules.remove(bookingIndex);
+    assets.put(asset);
+
+    return asset;
+}
 
     // ============================================================
     // WORK ORDER MANAGEMENT

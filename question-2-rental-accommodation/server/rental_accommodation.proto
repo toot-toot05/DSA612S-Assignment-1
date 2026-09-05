@@ -9,6 +9,8 @@ service RentalAccommodationService {
   rpc ListProperties (ListPropertiesRequest) returns (stream Property);
   rpc RemoveProperty(RemovePropertyRequest) returns (RemovePropertyResponse);
   rpc SearchProperty(SearchPropertyRequest) returns (SearchPropertyResponse);
+  rpc BookProperty(BookPropertyRequest) returns (BookPropertyResponse);
+  rpc ConfirmBooking(ConfirmBookingRequest) returns (ConfirmBookingResponse);
 }
 
 message AddPropertyRequest {
@@ -85,4 +87,28 @@ message RemovePropertyResponse {
   bool success = 1;
   string message = 2;
   repeated Property remaining_properties = 3;
+}
+
+message BookPropertyRequest {
+  string property_id = 1;
+  string guest_id = 2;
+  string check_in = 3;   
+  string check_out = 4;  
+}
+
+message BookPropertyResponse {
+  bool success = 1;
+  string message = 2;
+  string booking_request_id = 3;
+}
+
+message ConfirmBookingRequest {
+  string booking_request_id = 1;
+}
+
+message ConfirmBookingResponse {
+  bool success = 1;
+  string message = 2;
+  string booking_id = 3;
+  double total_cost = 4;
 }

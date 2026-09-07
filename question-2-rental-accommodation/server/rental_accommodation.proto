@@ -68,7 +68,7 @@ message Property {
 }
 
 message SearchPropertyRequest {
-  property_id = 1;
+  string property_id = 1;
 }
 
 message SearchPropertyResponse {

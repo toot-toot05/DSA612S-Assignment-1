@@ -1,6 +1,10 @@
+import ballerina/time;
 map<Property> properties = {};
 map<UserProfile> users = {};
 int nextPropertyId = 1000;
+map<BookPropertyRequest> bookingCart = {};
+map<ConfirmBookingResponse> confirmedBookings = {};
+int nextBookingId = 1;
 
 function saveProperty(AddPropertyRequest request) returns string {
     lock {

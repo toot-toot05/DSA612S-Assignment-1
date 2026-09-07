@@ -68,13 +68,13 @@ message Property {
 }
 
 message SearchPropertyRequest {
-  property_id =1;
+  property_id = 1;
 }
 
 message SearchPropertyResponse {
-  Property property =1;
-  bool found =2;
-  string status_mesg =3;
+  Property property = 1;
+  bool found = 2;
+  string status_mesg = 3;
 
 }
 

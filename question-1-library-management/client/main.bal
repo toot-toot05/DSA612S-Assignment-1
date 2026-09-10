@@ -78,8 +78,7 @@ public function main() returns error? {
                 check loanReturnMenu();
             }
             "4" => {
-                io:println("");
-                io:println("Booking functionality coming next.");
+                check bookingMenu();
             }
             "5" => {
                 io:println("");
@@ -434,4 +433,275 @@ function displayAsset(Asset asset) {
     io:println("Status:       ", asset.status);
     io:println("Date Acquired:", asset.dateAcquired);
     io:println("---------------------------------------------");
+}
+
+// ==========================================
+// BOOKING MENU
+// ==========================================
+
+function bookingMenu() returns error? {
+
+    while true {
+        io:println("");
+        io:println("============= BOOKING =============");
+        io:println("1. Create Booking");
+        io:println("2. View Bookings");
+        io:println("3. Cancel Booking");
+        io:println("4. Back");
+        io:println("===================================");
+        io:print("Select an option: ");
+
+        string|error input = io:readln();
+
+        if input is error {
+            io:println("Unable to read input.");
+            continue;
+        }
+
+        match input.trim() {
+            "1" => {
+                check createBooking();
+            }
+            "2" => {
+                check viewBookings();
+            }
+            "3" => {
+                check cancelBooking();
+            }
+            "4" => {
+                break;
+            }
+            _ => {
+                io:println("Invalid option.");
+            }
+        }
+    }
+}
+
+// ==========================================
+// CREATE BOOKING
+// ==========================================
+
+function createBooking() returns error? {
+
+    io:println("");
+    io:println("============= CREATE BOOKING =============");
+
+    io:print("Enter asset tag: ");
+
+    string|error assetInput = io:readln();
+
+    if assetInput is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = assetInput.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    io:print("Enter booking ID: ");
+
+    string|error bookingInput = io:readln();
+
+    if bookingInput is error {
+        io:println("Unable to read booking ID.");
+        return;
+    }
+
+    string bookingId = bookingInput.trim();
+
+    if bookingId == "" {
+        io:println("Booking ID cannot be empty.");
+        return;
+    }
+
+    io:print("Enter start date (YYYY-MM-DD): ");
+
+    string|error startInput = io:readln();
+
+    if startInput is error {
+        io:println("Unable to read start date.");
+        return;
+    }
+
+    string startDate = startInput.trim();
+
+    if startDate == "" {
+        io:println("Start date cannot be empty.");
+        return;
+    }
+
+    io:print("Enter end date (YYYY-MM-DD): ");
+
+    string|error endInput = io:readln();
+
+    if endInput is error {
+        io:println("Unable to read end date.");
+        return;
+    }
+
+    string endDate = endInput.trim();
+
+    if endDate == "" {
+        io:println("End date cannot be empty.");
+        return;
+    }
+
+    io:print("Enter booking description: ");
+
+    string|error descriptionInput = io:readln();
+
+    if descriptionInput is error {
+        io:println("Unable to read description.");
+        return;
+    }
+
+    string description = descriptionInput.trim();
+
+    Schedule booking = {
+        scheduleId: bookingId,
+        scheduleType: "BOOKING",
+        dueDate: startDate,
+        startDate: startDate,
+        endDate: endDate,
+        description: description
+    };
+
+    string path = "/api/assets/" + assetTag + "/bookings";
+
+    http:Response response = check backend->post(path, booking);
+
+    io:println("");
+
+    if response.statusCode == 201 {
+        io:println("Booking successfully created.");
+        io:println("Booking ID: ", bookingId);
+        io:println("Asset Tag: ", assetTag);
+        io:println("Start Date: ", startDate);
+        io:println("End Date: ", endDate);
+    } else {
+        io:println("Unable to create booking.");
+        io:println("HTTP Status: ", response.statusCode);
+
+        string|error body = response.getTextPayload();
+
+        if body is string {
+            io:println("Message: ", body);
+        }
+    }
+}
+
+// ==========================================
+// VIEW BOOKINGS
+// ==========================================
+
+function viewBookings() returns error? {
+
+    io:println("");
+    io:print("Enter asset tag: ");
+
+    string|error input = io:readln();
+
+    if input is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = input.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    string path = "/api/assets/" + assetTag + "/bookings";
+
+    Schedule[] bookings = check backend->get(path);
+
+    io:println("");
+    io:println("============= BOOKINGS =============");
+
+    if bookings.length() == 0 {
+        io:println("No bookings found for this asset.");
+        return;
+    }
+
+    foreach Schedule booking in bookings {
+        io:println("");
+        io:println("Booking ID:   ", booking.scheduleId);
+        io:println("Type:         ", booking.scheduleType);
+        io:println("Start Date:   ", booking.startDate);
+        io:println("End Date:     ", booking.endDate);
+        io:println("Description:  ", booking.description);
+        io:println("------------------------------------");
+    }
+
+    io:println("Total bookings: ", bookings.length());
+}
+
+// ==========================================
+// CANCEL BOOKING
+// ==========================================
+
+function cancelBooking() returns error? {
+
+    io:println("");
+    io:println("============= CANCEL BOOKING =============");
+
+    io:print("Enter asset tag: ");
+
+    string|error assetInput = io:readln();
+
+    if assetInput is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = assetInput.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    io:print("Enter booking ID: ");
+
+    string|error bookingInput = io:readln();
+
+    if bookingInput is error {
+        io:println("Unable to read booking ID.");
+        return;
+    }
+
+    string bookingId = bookingInput.trim();
+
+    if bookingId == "" {
+        io:println("Booking ID cannot be empty.");
+        return;
+    }
+
+    string path =
+        "/api/assets/" + assetTag + "/bookings/" + bookingId;
+
+    http:Response response = check backend->delete(path);
+
+    io:println("");
+
+    if response.statusCode == 200 {
+        io:println("Booking successfully cancelled.");
+        io:println("Booking ID: ", bookingId);
+    } else {
+        io:println("Unable to cancel booking.");
+        io:println("HTTP Status: ", response.statusCode);
+
+        string|error body = response.getTextPayload();
+
+        if body is string {
+            io:println("Message: ", body);
+        }
+    }
 }

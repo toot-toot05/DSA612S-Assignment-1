@@ -81,8 +81,7 @@ public function main() returns error? {
                 check bookingMenu();
             }
             "5" => {
-                io:println("");
-                io:println("Overdue Dashboard functionality coming next.");
+                check overdueDashboard();
             }
             "6" => {
                 io:println("");
@@ -704,4 +703,44 @@ function cancelBooking() returns error? {
             io:println("Message: ", body);
         }
     }
+}
+
+// ==========================================
+// OVERDUE DASHBOARD
+// ==========================================
+
+function overdueDashboard() returns error? {
+
+    io:println("");
+    io:println("============= OVERDUE DASHBOARD =============");
+
+    Asset[] assets = check backend->get(
+        "/api/assets/maintenance/overdue"
+    );
+
+    if assets.length() == 0 {
+        io:println("No overdue maintenance assets found.");
+        return;
+    }
+
+    foreach Asset asset in assets {
+        io:println("");
+        io:println("Asset Tag:    ", asset.assetTag);
+        io:println("Name:         ", asset.name);
+        io:println("Institution:  ", asset.institution);
+        io:println("Site:         ", asset.site);
+        io:println("Status:       ", asset.status);
+        io:println("Date Acquired:", asset.dateAcquired);
+
+        foreach Schedule schedule in asset.schedules {
+            if schedule.scheduleType == "MAINTENANCE" {
+                io:println("Due Date:     ", schedule.dueDate);
+                io:println("Description:  ", schedule.description);
+            }
+        }
+
+        io:println("---------------------------------------------");
+    }
+
+    io:println("Total overdue assets: ", assets.length());
 }

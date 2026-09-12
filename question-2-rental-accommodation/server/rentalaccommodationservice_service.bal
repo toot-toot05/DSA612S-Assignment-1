@@ -1,5 +1,5 @@
 import ballerina/grpc;
-
+import ballerina/time;
 listener grpc:Listener ep = new (9090);
 
 @grpc:Descriptor {value: RENTAL_ACCOMMODATION_DESC}
@@ -73,6 +73,54 @@ remote function SearchProperty(SearchPropertyRequest value) returns SearchProper
             return {found: false, property: {}, status_mesg: "Not Available"};
         }
         return {found: true, property: properties.get(value.property_id), status_mesg: "Found"};
+    }
+}
+
+remote function BookProperty(BookPropertyRequest value) returns BookPropertyResponse|error {
+    lock {
+    
+
+        if value.check_out <= value.check_in {
+            return {success: false, message: "Check-out must be after check-in", booking_request_id: ""};
+        }
+
+        string bookingId = "CART-" + nextBookingId.toString();
+        nextBookingId += 1;
+        bookingCart[bookingId] = value;
+
+        return {success: true, message: "Added to booking cart", booking_request_id: bookingId};
+    }
+}
+
+remote function ConfirmBooking(ConfirmBookingRequest value) returns ConfirmBookingResponse|error {
+    lock {
+        if !bookingCart.hasKey(value.booking_request_id) {
+            return {success: false, message: "Booking request not found", booking_id: "", total_cost: 0.0};
+        }
+
+        BookPropertyRequest cartEntry = bookingCart.get(value.booking_request_id);
+        Property target = properties.get(cartEntry.property_id);
+
+        time:Utc ciUtc = check time:utcFromString(cartEntry.check_in + "T00:00:00.00Z");
+        time:Utc coUtc = check time:utcFromString(cartEntry.check_out + "T00:00:00.00Z");
+
+        int nights = <int>(coUtc[0] - ciUtc[0]) / 86400;
+        float totalCost = <float>nights * target.price_per_night;
+
+        string bookingId = "BOOK-" + nextBookingId.toString();
+        nextBookingId += 1;
+
+        ConfirmBookingResponse response = {
+            success: true,
+            message: "Booking confirmed",
+            booking_id: bookingId,
+            total_cost: totalCost
+        };
+
+        confirmedBookings[bookingId] = response;
+        _ = bookingCart.remove(value.booking_request_id);
+
+        return response;
     }
 }
 }

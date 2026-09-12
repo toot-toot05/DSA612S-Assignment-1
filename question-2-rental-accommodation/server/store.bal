@@ -1,4 +1,3 @@
-import ballerina/time;
 map<Property> properties = {};
 map<UserProfile> users = {};
 int nextPropertyId = 1000;

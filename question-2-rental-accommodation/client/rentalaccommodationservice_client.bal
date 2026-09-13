@@ -25,4 +25,21 @@ public function main() returns error? {
     check listPropertiesResponse.forEach(function(Property value) {
         io:println(value);
     });
+
+        SearchPropertyRequest searchPropertyRequest = {property_id: addPropertyResponse.property_id};
+    SearchPropertyResponse searchPropertyResponse = check ep->SearchProperty(searchPropertyRequest);
+    io:println(searchPropertyResponse);
+
+    BookPropertyRequest bookPropertyRequest = {property_id: addPropertyResponse.property_id, guest_id: "GUEST-001", check_in: "2026-10-01", check_out: "2026-10-05"};
+    BookPropertyResponse bookPropertyResponse = check ep->BookProperty(bookPropertyRequest);
+    io:println(bookPropertyResponse);
+
+    ConfirmBookingRequest confirmBookingRequest = {booking_request_id: bookPropertyResponse.booking_request_id};
+    ConfirmBookingResponse confirmBookingResponse = check ep->ConfirmBooking(confirmBookingRequest);
+    io:println(confirmBookingResponse);
+
+    RemovePropertyRequest removePropertyRequest = {property_id: addPropertyResponse.property_id, host_id: "HOST-001"};
+    RemovePropertyResponse removePropertyResponse = check ep->RemoveProperty(removePropertyRequest);
+    io:println(removePropertyResponse);
 }
+

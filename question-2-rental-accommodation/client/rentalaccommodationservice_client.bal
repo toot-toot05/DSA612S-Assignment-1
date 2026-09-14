@@ -3,43 +3,216 @@ import ballerina/io;
 RentalAccommodationServiceClient ep = check new ("http://localhost:9090");
 
 public function main() returns error? {
-    AddPropertyRequest addPropertyRequest = {property_name: "Ocean View Apartment", location: "Swakopmund", property_type: "Apartment", price_per_night: 1200, status: "AVAILABLE"};
-    AddPropertyResponse addPropertyResponse = check ep->AddProperty(addPropertyRequest);
-    io:println(addPropertyResponse);
+	while true {
+		io:println("\n========================================");
+		io:println(" RENTAL ACCOMMODATION SYSTEM");
+		io:println("========================================");
+		io:println("1. Add Property");
+		io:println("2. Update Property");
+		io:println("3. List Properties");
+		io:println("4. Search Property");
+		io:println("5. Book Property");
+		io:println("6. Confirm Booking");
+		io:println("7. Remove Property");
+		io:println("8. Create Users");
+		io:println("9. Exit");
+		io:println("========================================");
 
-    UpdatePropertyRequest updatePropertyRequest = {property_id: addPropertyResponse.property_id, property_name: "Ocean View Apartment", location: "Swakopmund", property_type: "Apartment", price_per_night: 1350, status: "AVAILABLE"};
-    UpdatePropertyResponse updatePropertyResponse = check ep->UpdateProperty(updatePropertyRequest);
-    io:println(updatePropertyResponse);
-
-    UserProfile host = {user_id: "HOST-001", full_name: "Amara Ndlovu", email: "amara@example.com", role: "HOST"};
-    UserProfile guest = {user_id: "GUEST-001", full_name: "Lukas Smith", email: "lukas@example.com", role: "GUEST"};
-    CreateUsersStreamingClient createUsersStreamingClient = check ep->CreateUsers();
-    check createUsersStreamingClient->sendUserProfile(host);
-    check createUsersStreamingClient->sendUserProfile(guest);
-    check createUsersStreamingClient->complete();
-    CreateUsersResponse? createUsersResponse = check createUsersStreamingClient->receiveCreateUsersResponse();
-    io:println(createUsersResponse);
-
-    ListPropertiesRequest listPropertiesRequest = {};
-    stream<Property, error?> listPropertiesResponse = check ep->ListProperties(listPropertiesRequest);
-    check listPropertiesResponse.forEach(function(Property value) {
-        io:println(value);
-    });
-
-        SearchPropertyRequest searchPropertyRequest = {property_id: addPropertyResponse.property_id};
-    SearchPropertyResponse searchPropertyResponse = check ep->SearchProperty(searchPropertyRequest);
-    io:println(searchPropertyResponse);
-
-    BookPropertyRequest bookPropertyRequest = {property_id: addPropertyResponse.property_id, guest_id: "GUEST-001", check_in: "2026-10-01", check_out: "2026-10-05"};
-    BookPropertyResponse bookPropertyResponse = check ep->BookProperty(bookPropertyRequest);
-    io:println(bookPropertyResponse);
-
-    ConfirmBookingRequest confirmBookingRequest = {booking_request_id: bookPropertyResponse.booking_request_id};
-    ConfirmBookingResponse confirmBookingResponse = check ep->ConfirmBooking(confirmBookingRequest);
-    io:println(confirmBookingResponse);
-
-    RemovePropertyRequest removePropertyRequest = {property_id: addPropertyResponse.property_id, host_id: "HOST-001"};
-    RemovePropertyResponse removePropertyResponse = check ep->RemoveProperty(removePropertyRequest);
-    io:println(removePropertyResponse);
+		string choice = io:readln("Choose an option: ");
+		match choice {
+			"1" => {
+				check addProperty();
+			}
+			"2" => {
+				check updateProperty();
+			}
+			"3" => {
+				check listProperties();
+			}
+			"4" => {
+				check searchProperty();
+			}
+			"5" => {
+				check bookProperty();
+			}
+			"6" => {
+				check confirmBooking();
+			}
+			"7" => {
+				check removeProperty();
+			}
+			"8" => {
+				check createUsers();
+			}
+			"9" => {
+				io:println("\nThank you for using the Rental Accommodation System.");
+				return;
+			}
+			_ => {
+				io:println("\nInvalid option. Please choose between 1 and 9.");
+			}
+		}
+	}
 }
 
+function addProperty() returns error? {
+	io:println("\n========== ADD PROPERTY ==========");
+	string propertyName = io:readln("Property name: ");
+	string location = io:readln("Location: ");
+	string propertyType = io:readln("Property type: ");
+	float price = check float:fromString(io:readln("Price per night: "));
+	string status = io:readln("Status: ");
+
+	AddPropertyResponse response = check ep->AddProperty({
+		property_name: propertyName,
+		location: location,
+		property_type: propertyType,
+		price_per_night: price,
+		status: status
+	});
+	io:println("\n========== RESULT ==========");
+	io:println("Property ID: ", response.property_id);
+	io:println("Message: ", response.message);
+}
+
+function updateProperty() returns error? {
+	io:println("\n========== UPDATE PROPERTY ==========");
+	string propertyId = io:readln("Property ID: ");
+	string propertyName = io:readln("New property name: ");
+	string location = io:readln("New location: ");
+	string propertyType = io:readln("New property type: ");
+	float price = check float:fromString(io:readln("New price per night: "));
+	string status = io:readln("New status: ");
+
+	UpdatePropertyResponse response = check ep->UpdateProperty({
+		property_id: propertyId,
+		property_name: propertyName,
+		location: location,
+		property_type: propertyType,
+		price_per_night: price,
+		status: status
+	});
+	io:println("\n========== RESULT ==========");
+	io:println("Updated: ", response.updated);
+	io:println("Message: ", response.message);
+	if response.updated {
+		io:println("Property: ", response.property);
+	}
+}
+
+function listProperties() returns error? {
+	io:println("\n========== LIST PROPERTIES ==========");
+	string location = io:readln("Location (press Enter for all): ");
+	string propertyType = io:readln("Property type (press Enter for all): ");
+	stream<Property, error?> properties = check ep->ListProperties({
+		location: location,
+		property_type: propertyType
+	});
+	boolean found = false;
+	check properties.forEach(function(Property property) {
+		found = true;
+		io:println("\n----------------------------------------");
+		io:println("Property ID: ", property.property_id);
+		io:println("Name: ", property.property_name);
+		io:println("Location: ", property.location);
+		io:println("Type: ", property.property_type);
+		io:println("Price per night: ", property.price_per_night);
+		io:println("Status: ", property.status);
+	});
+	if !found {
+		io:println("\nNo properties found.");
+	}
+}
+
+function searchProperty() returns error? {
+	io:println("\n========== SEARCH PROPERTY ==========");
+	SearchPropertyResponse response = check ep->SearchProperty({
+		property_id: io:readln("Property ID: ")
+	});
+	if response.found {
+		io:println("\n========== PROPERTY FOUND ==========");
+		io:println("Property ID: ", response.property.property_id);
+		io:println("Name: ", response.property.property_name);
+		io:println("Location: ", response.property.location);
+		io:println("Type: ", response.property.property_type);
+		io:println("Price per night: ", response.property.price_per_night);
+		io:println("Status: ", response.property.status);
+	} else {
+		io:println("\nProperty not found.");
+		io:println("Message: ", response.status_mesg);
+	}
+}
+
+function bookProperty() returns error? {
+	io:println("\n========== BOOK PROPERTY ==========");
+	BookPropertyResponse response = check ep->BookProperty({
+		property_id: io:readln("Property ID: "),
+		guest_id: io:readln("Guest ID: "),
+		check_in: io:readln("Check-in date (YYYY-MM-DD): "),
+		check_out: io:readln("Check-out date (YYYY-MM-DD): ")
+	});
+	io:println("\n========== BOOKING RESULT ==========");
+	io:println("Success: ", response.success);
+	io:println("Message: ", response.message);
+	if response.success {
+		io:println("Booking Request ID: ", response.booking_request_id);
+	}
+}
+
+function confirmBooking() returns error? {
+	io:println("\n========== CONFIRM BOOKING ==========");
+	ConfirmBookingResponse response = check ep->ConfirmBooking({
+		booking_request_id: io:readln("Booking Request ID: ")
+	});
+	io:println("\n========== CONFIRMATION RESULT ==========");
+	io:println("Success: ", response.success);
+	io:println("Message: ", response.message);
+	if response.success {
+		io:println("Booking ID: ", response.booking_id);
+		io:println("Total cost: ", response.total_cost);
+	}
+}
+
+function removeProperty() returns error? {
+	io:println("\n========== REMOVE PROPERTY ==========");
+	RemovePropertyResponse response = check ep->RemoveProperty({
+		property_id: io:readln("Property ID: "),
+		host_id: io:readln("Host ID: ")
+	});
+	io:println("\n========== REMOVE RESULT ==========");
+	io:println("Success: ", response.success);
+	io:println("Message: ", response.message);
+	if response.success {
+		io:println("\nRemaining properties:");
+		foreach Property property in response.remaining_properties {
+			io:println(property.property_id, " | ", property.property_name, " | ", property.location);
+		}
+	}
+}
+
+function createUsers() returns error? {
+	io:println("\n========== CREATE USERS ==========");
+	CreateUsersStreamingClient streamClient = check ep->CreateUsers();
+	while true {
+		io:println("\nEnter user information:");
+		UserProfile user = {
+			user_id: io:readln("User ID: "),
+			full_name: io:readln("Full name: "),
+			email: io:readln("Email: "),
+			role: io:readln("Role (HOST/GUEST): ")
+		};
+		check streamClient->sendUserProfile(user);
+		if io:readln("Add another user? (y/n): ").toLowerAscii() != "y" {
+			break;
+		}
+	}
+	check streamClient->complete();
+	CreateUsersResponse? response = check streamClient->receiveCreateUsersResponse();
+	io:println("\n========== RESULT ==========");
+	if response is CreateUsersResponse {
+		io:println("Users created: ", response.users_created);
+		io:println("Message: ", response.message);
+	} else {
+		io:println("No response received.");
+	}
+}

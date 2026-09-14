@@ -1,5 +1,6 @@
 import ballerina/grpc;
 import ballerina/time;
+import ballerina/io;
 listener grpc:Listener ep = new (9090);
 
 @grpc:Descriptor {value: RENTAL_ACCOMMODATION_DESC}
@@ -45,9 +46,15 @@ service "RentalAccommodationService" on ep {
         };
     }
 
-    remote function ListProperties(ListPropertiesRequest value) returns stream<Property, error?>|error {
-        return matchingProperties(value).toStream();
-    }
+remote function ListProperties(ListPropertiesRequest value) returns stream<Property, error?>|error {
+    io:println("ListProperties called");
+
+    Property[] matches = matchingProperties(value);
+
+    io:println("Matches found: ", matches.length());
+
+    return matches.toStream();
+}
 
 remote function RemoveProperty(RemovePropertyRequest value) returns RemovePropertyResponse|error {
     lock {

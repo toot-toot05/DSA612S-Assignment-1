@@ -84,8 +84,7 @@ public function main() returns error? {
                 check overdueDashboard();
             }
             "6" => {
-                io:println("");
-                io:println("Schedule Manager functionality coming next.");
+                check scheduleManager();
             }
             "7" => {
                 io:println("");
@@ -743,4 +742,311 @@ function overdueDashboard() returns error? {
     }
 
     io:println("Total overdue assets: ", assets.length());
+}
+
+// ==========================================
+// SCHEDULE MANAGER
+// ==========================================
+
+function scheduleManager() returns error? {
+
+    while true {
+        io:println("");
+        io:println("============= SCHEDULE MANAGER =============");
+        io:println("1. View Schedules");
+        io:println("2. Add Schedule");
+        io:println("3. Delete Schedule");
+        io:println("4. Back");
+        io:println("=============================================");
+        io:print("Select an option: ");
+
+        string|error input = io:readln();
+
+        if input is error {
+            io:println("Unable to read input.");
+            continue;
+        }
+
+        match input.trim() {
+            "1" => {
+                check viewSchedules();
+            }
+            "2" => {
+                check addSchedule();
+            }
+            "3" => {
+                check deleteSchedule();
+            }
+            "4" => {
+                break;
+            }
+            _ => {
+                io:println("Invalid option.");
+            }
+        }
+    }
+}
+
+// ==========================================
+// VIEW SCHEDULES
+// ==========================================
+
+function viewSchedules() returns error? {
+
+    io:println("");
+    io:print("Enter asset tag: ");
+
+    string|error input = io:readln();
+
+    if input is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = input.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    string path = "/api/assets/" + assetTag + "/schedules";
+
+    Schedule[] schedules = check backend->get(path);
+
+    io:println("");
+    io:println("============= ASSET SCHEDULES =============");
+
+    if schedules.length() == 0 {
+        io:println("No schedules found for this asset.");
+        return;
+    }
+
+    foreach Schedule schedule in schedules {
+        io:println("");
+        io:println("Schedule ID:  ", schedule.scheduleId);
+        io:println("Type:         ", schedule.scheduleType);
+        io:println("Due Date:     ", schedule.dueDate);
+        io:println("Start Date:   ", schedule.startDate);
+        io:println("End Date:     ", schedule.endDate);
+        io:println("Description:  ", schedule.description);
+        io:println("--------------------------------------------");
+    }
+
+    io:println("Total schedules: ", schedules.length());
+}
+
+// ==========================================
+// ADD SCHEDULE
+// ==========================================
+
+function addSchedule() returns error? {
+
+    io:println("");
+    io:println("============= ADD SCHEDULE =============");
+
+    io:print("Enter asset tag: ");
+
+    string|error assetInput = io:readln();
+
+    if assetInput is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = assetInput.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    io:print("Enter schedule ID: ");
+
+    string|error idInput = io:readln();
+
+    if idInput is error {
+        io:println("Unable to read schedule ID.");
+        return;
+    }
+
+    string scheduleId = idInput.trim();
+
+    if scheduleId == "" {
+        io:println("Schedule ID cannot be empty.");
+        return;
+    }
+
+    io:println("");
+    io:println("Schedule types:");
+    io:println("1. MAINTENANCE");
+    io:println("2. BOOKING");
+    io:println("3. SERVICING");
+    io:print("Select schedule type: ");
+
+    string|error typeInput = io:readln();
+
+    if typeInput is error {
+        io:println("Unable to read schedule type.");
+        return;
+    }
+
+    string scheduleType = "";
+
+    match typeInput.trim() {
+        "1" => {
+            scheduleType = "MAINTENANCE";
+        }
+        "2" => {
+            scheduleType = "BOOKING";
+        }
+        "3" => {
+            scheduleType = "SERVICING";
+        }
+        _ => {
+            io:println("Invalid schedule type.");
+            return;
+        }
+    }
+
+    io:print("Enter due date (YYYY-MM-DD): ");
+
+    string|error dueInput = io:readln();
+
+    if dueInput is error {
+        io:println("Unable to read due date.");
+        return;
+    }
+
+    string dueDate = dueInput.trim();
+
+    if dueDate == "" {
+        io:println("Due date cannot be empty.");
+        return;
+    }
+
+    io:print("Enter start date (YYYY-MM-DD, optional): ");
+
+    string|error startInput = io:readln();
+
+    if startInput is error {
+        io:println("Unable to read start date.");
+        return;
+    }
+
+    string startDate = startInput.trim();
+
+    io:print("Enter end date (YYYY-MM-DD, optional): ");
+
+    string|error endInput = io:readln();
+
+    if endInput is error {
+        io:println("Unable to read end date.");
+        return;
+    }
+
+    string endDate = endInput.trim();
+
+    io:print("Enter description: ");
+
+    string|error descriptionInput = io:readln();
+
+    if descriptionInput is error {
+        io:println("Unable to read description.");
+        return;
+    }
+
+    string description = descriptionInput.trim();
+
+    Schedule schedule = {
+        scheduleId: scheduleId,
+        scheduleType: scheduleType,
+        dueDate: dueDate,
+        startDate: startDate,
+        endDate: endDate,
+        description: description
+    };
+
+    string path = "/api/assets/" + assetTag + "/schedules";
+
+    http:Response response = check backend->post(path, schedule);
+
+    io:println("");
+
+    if response.statusCode == 201 {
+        io:println("Schedule successfully added.");
+        io:println("Schedule ID: ", scheduleId);
+    } else {
+        io:println("Unable to add schedule.");
+        io:println("HTTP Status: ", response.statusCode);
+
+        string|error body = response.getTextPayload();
+
+        if body is string {
+            io:println("Message: ", body);
+        }
+    }
+}
+
+// ==========================================
+// DELETE SCHEDULE
+// ==========================================
+
+function deleteSchedule() returns error? {
+
+    io:println("");
+    io:println("============= DELETE SCHEDULE =============");
+
+    io:print("Enter asset tag: ");
+
+    string|error assetInput = io:readln();
+
+    if assetInput is error {
+        io:println("Unable to read asset tag.");
+        return;
+    }
+
+    string assetTag = assetInput.trim();
+
+    if assetTag == "" {
+        io:println("Asset tag cannot be empty.");
+        return;
+    }
+
+    io:print("Enter schedule ID: ");
+
+    string|error idInput = io:readln();
+
+    if idInput is error {
+        io:println("Unable to read schedule ID.");
+        return;
+    }
+
+    string scheduleId = idInput.trim();
+
+    if scheduleId == "" {
+        io:println("Schedule ID cannot be empty.");
+        return;
+    }
+
+    string path =
+        "/api/assets/" + assetTag + "/schedules/" + scheduleId;
+
+    http:Response response = check backend->delete(path);
+
+    io:println("");
+
+    if response.statusCode == 200 {
+        io:println("Schedule successfully deleted.");
+        io:println("Schedule ID: ", scheduleId);
+    } else {
+        io:println("Unable to delete schedule.");
+        io:println("HTTP Status: ", response.statusCode);
+
+        string|error body = response.getTextPayload();
+
+        if body is string {
+            io:println("Message: ", body);
+        }
+    }
 }

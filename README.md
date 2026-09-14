@@ -13,7 +13,7 @@ The assignment consists of two distributed systems:
 
 **Question 1**
 
-* Lee
+* Prince-Lee Shigwedha(Leader)
 
 **Question 2**
 

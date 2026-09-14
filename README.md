@@ -1,43 +1,255 @@
-# DSA Assignment 1
+# DSA612S Assignment 1
 
-Distributed Systems and Applications assignment implemented using Ballerina.
+## Distributed Systems and Applications
 
-## Question 1: RESTful APIs - Library and Resource Management System
+This repository contains our implementation for DSA612S Assignment 1.
 
-Implementation by Prince-Lee.
+The assignment consists of two distributed systems:
 
-### Technology
-- Ballerina
-- REST/HTTP
-- Ballerina Map/Table in-memory datastore
+* **Question 1:** RESTful API Library and Resource Management System
+* **Question 2:** gRPC Rental Accommodation System
 
-### Current Implementation
-- Asset data models
-- Component management model
-- Schedule model
-- Work order and task model
-- Institution model
-- `assetTag` as unique asset identifier
-- RESTful CRUD API
-- HTTP error handling
+### Group Work
 
-## Question 2: Remote Invocation - Rental Accommodation System
+**Question 1**
 
-Implemented as sibling Ballerina packages in `question-2-rental-accommodation/server` and
-`question-2-rental-accommodation/client`.
+* Lee
 
-### Technology
-- Ballerina
-- gRPC
-- Protocol Buffers
-- Ballerina maps/tables
+**Question 2**
 
-### Operations
-- `AddProperty`: registers a property and returns a generated property ID.
-- `CreateUsers`: client-streaming registration for multiple hosts and guests.
-- `UpdateProperty`: updates a listing by property ID.
-- `ListProperties`: server-streaming listing with optional location and property-type filters.
+* Kiami Quinga
+* Wilhelm Kafidi
 
-### Running Question 2
-1. Start the server with `bal run` from `question-2-rental-accommodation/server`.
-2. Run `bal run` from `question-2-rental-accommodation/client`.
+---
+
+# Question 1: Library and Resource Management System
+
+Question 1 is a distributed library and resource management system for institutions of higher learning. It manages resources such as books, electronic equipment, laboratories and meeting rooms across different institutions and campuses.
+
+The system consists of a Ballerina REST API backend and a Ballerina command-line client. Communication between the client and server takes place through HTTP/REST. Assets are stored using a Ballerina Map/Table, with `assetTag` as the unique identifier.
+
+### Main Features
+
+**Asset Management**
+
+* Create, view, update and delete assets
+* View all assets
+* Filter assets by institution and site
+
+**Institution Management**
+
+* Add and remove institutions
+* Manage sites/campuses
+* Assign assets to institutions and sites
+
+**Schedules**
+
+* Add, view and remove maintenance, booking and servicing schedules
+* Detect overdue maintenance
+
+**Components**
+
+* Add and remove components belonging to complex assets
+
+**Work Orders**
+
+* Create, update and close work orders
+* Add and remove tasks belonging to work orders
+
+**Loaning and Booking**
+
+* Loan and return assets
+* Create, view and cancel bookings
+* Prevent conflicting bookings
+
+### Client
+
+The Ballerina client provides:
+
+```text
+1. Global Asset View
+2. Campus / Institution View
+3. Loan / Return
+4. Booking
+5. Overdue Dashboard
+6. Schedule Manager
+7. Exit
+```
+
+These correspond to the client functionality required by Question 1.
+
+---
+
+# Question 2: Rental Accommodation System
+
+Question 2 is a distributed rental accommodation system using **Ballerina gRPC**.
+
+The system manages properties, hosts, guests and bookings.
+
+The implementation uses a `.proto` contract to define the gRPC service and messages.
+
+### Main Operations
+
+* Add property
+* Create users using client-side streaming
+* Update property
+* Remove property
+* List available properties using server-side streaming
+* Search for a property
+* Book a property
+* Confirm a booking
+
+The server maintains property and booking state using Ballerina maps or tables and performs validation such as date-overlap checking and booking cost calculation.
+
+---
+
+# Technologies
+
+| Component                | Technology                  |
+| ------------------------ | --------------------------- |
+| Language                 | Ballerina                   |
+| Question 1 Communication | HTTP/REST                   |
+| Question 1 Database      | Ballerina Map/Table         |
+| Question 1 Client        | Ballerina CLI               |
+| Question 2 Communication | gRPC                        |
+| Question 2 Contract      | Protocol Buffers (`.proto`) |
+| Question 2 Database      | Ballerina Map/Table         |
+
+---
+
+# Naming Conventions
+
+Keep identifiers consistent throughout the project.
+
+### Asset Tags
+
+Use:
+
+```text
+INSTITUTION-TYPE-NUMBER
+```
+
+Examples:
+
+```text
+NUST-LIB-3DP-001
+NUST-LAP-001
+UNAM-LAB-001
+```
+
+Asset tags must be unique.
+
+### Components
+
+```text
+C001
+C002
+C003
+```
+
+### Schedules
+
+```text
+SCH-001
+SCH-002
+SCH-003
+```
+
+### Work Orders
+
+```text
+WO-001
+WO-002
+WO-003
+```
+
+### Tasks
+
+```text
+T1
+T2
+T3
+```
+
+### Dates
+
+Always use:
+
+```text
+YYYY-MM-DD
+```
+
+Example:
+
+```text
+2026-09-01
+```
+
+### Asset Status
+
+Use the existing values:
+
+```text
+AVAILABLE
+LOANED_OUT
+OCCUPIED
+UNDER_MAINTENANCE
+DISPOSED
+```
+
+### Schedule Types
+
+```text
+MAINTENANCE
+BOOKING
+SERVICING
+```
+
+### Work Order Status
+
+```text
+OPEN
+IN_PROGRESS
+CLOSED
+```
+
+Do not create alternative names for existing values.
+
+---
+
+# Development Rules
+
+Keep new features consistent with the existing project.
+
+1. Check whether functionality already exists before adding a new endpoint or function.
+2. Follow the existing naming and API structure.
+3. Keep backend and client field names consistent.
+4. Validate invalid, duplicate and conflicting requests.
+5. Test new features before committing.
+6. Avoid unnecessary technologies or changes outside the assignment requirements.
+7. Keep commits focused on a specific feature.
+
+Example commit:
+
+```text
+implement schedule manager client
+```
+
+Before pushing:
+
+```bash
+git status
+git pull --rebase origin main
+git push origin main
+```
+
+---
+
+# Project Scope
+
+Question 1 focuses on the **RESTful library and resource management system**.
+
+Question 2 focuses on the **gRPC rental accommodation system**.
+
+Both questions use Ballerina, but they demonstrate different distributed communication approaches required by the assignment.
+The goal is to keep the implementation simple, consistent and easy for every group member to understand and defend.

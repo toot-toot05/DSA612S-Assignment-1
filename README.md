@@ -28,6 +28,11 @@ Question 1 is a distributed library and resource management system for instituti
 
 The system consists of a Ballerina REST API backend and a Ballerina command-line client. Communication between the client and server takes place through HTTP/REST. Assets are stored using a Ballerina Map/Table, with `assetTag` as the unique identifier.
 
+### Ballerina Version Note
+
+Question 1 was developed and tested using **Ballerina 2201.12.9 (Swan Lake Update 12)**. This is a different Ballerina version from the one used for Question 2. The Question 1 implementation is fully functional and tested on its specified version, so the version difference does not affect the functionality of the system. The required Ballerina version should be used when building or running Question 1 to ensure compatibility.
+
+
 ### Main Features
 
 **Asset Management**
